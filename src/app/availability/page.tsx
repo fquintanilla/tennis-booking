@@ -71,6 +71,9 @@ export default function AvailabilityPage() {
   const court = useMemo(() => courts.find((item) => item.id === selectedCourt) ?? courts[0], [selectedCourt]);
   const selectedSlotIndex = selectedTime ? times.indexOf(selectedTime) : -1;
   const selectedEndHour = selectedSlotIndex >= 0 ? Number(times[selectedSlotIndex].slice(0, 2)) + duration : null;
+  const confirmationHref = selectedTime
+    ? `/reservation/confirm?court=${encodeURIComponent(court.id)}&date=${selectedDate.toISOString().slice(0, 10)}&time=${selectedTime}&duration=${duration}`
+    : "";
   const dates = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(initialDate, index)), []);
   const calendarDays = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
@@ -176,7 +179,11 @@ export default function AvailabilityPage() {
             <div className="flex items-center justify-between"><h2 id="summary-heading" className="text-lg font-bold text-stone-900">Tu reserva</h2><span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{duration} {duration === 1 ? "hora" : "horas"}</span></div>
             <div className="mt-5 border-y border-stone-100 py-4"><p className="font-semibold text-stone-900">Club Terravalle</p><p className="mt-1 text-sm text-stone-600">Av. Interoceánica, Cumbayá</p><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-stone-500">Cancha</dt><dd className="font-medium text-stone-900">{court.name}</dd></div><div className="flex justify-between gap-4"><dt className="text-stone-500">Fecha</dt><dd className="text-right font-medium text-stone-900">{formatDate(selectedDate)}</dd></div><div className="flex justify-between gap-4"><dt className="text-stone-500">Horario</dt><dd className={`font-medium ${selectedTime ? "text-stone-900" : "text-stone-400"}`}>{selectedTime && selectedEndHour ? `${selectedTime} – ${String(selectedEndHour).padStart(2, "0")}:00` : "Elige un horario"}</dd></div></dl></div>
             <div className="mt-4 flex items-end justify-between"><span className="text-sm text-stone-500">Total</span><span className="text-xl font-bold text-stone-900">${(court.price * duration).toFixed(2)}</span></div>
-            <button className="mt-5 w-full rounded-xl bg-emerald-800 px-4 py-3 text-sm font-semibold text-white transition enabled:hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400" disabled={!selectedTime} type="button">Continuar con la reserva</button>
+            {selectedTime ? (
+              <Link className="mt-5 block w-full rounded-xl bg-emerald-800 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-900" href={confirmationHref}>Continuar con la reserva</Link>
+            ) : (
+              <button className="mt-5 w-full rounded-xl bg-emerald-800 px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400" disabled type="button">Continuar con la reserva</button>
+            )}
             <p className="mt-3 text-center text-xs leading-5 text-stone-500">Pago directamente en el club. Podrás revisar tu reserva antes de confirmarla.</p>
           </aside>
         </div>

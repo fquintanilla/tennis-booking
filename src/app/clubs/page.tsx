@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const clubs = [
   {
     name: "Club Terravalle",
@@ -114,10 +116,9 @@ export default function ClubsPage() {
 
         <aside className="mt-10 rounded-2xl bg-emerald-900 px-5 py-6 text-white sm:flex sm:items-center sm:justify-between sm:px-7">
           <div><p className="text-lg font-bold">¿Tienes un club de tenis?</p><p className="mt-1 text-sm text-emerald-100">Publica tus canchas y recibe reservas desde cancha.</p></div>
-          <Link className="mt-4 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 sm:mt-0" href="/admin">Conoce más</Link>
+          <Link className="mt-4 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 sm:mt-0" href="/conoce-mas">Conoce más</Link>
         </aside>
       </main>
     </div>
   );
 }
-import Link from "next/link";

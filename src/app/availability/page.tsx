@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Court = {
   id: string;
@@ -30,28 +30,63 @@ const slotStatus: Record<string, SlotState> = {
 
 const durations = [1, 2, 3];
 
-const dates = [
-  { day: "Hoy", date: "22", month: "sep" },
-  { day: "Mar", date: "23", month: "sep" },
-  { day: "Mié", date: "24", month: "sep" },
-  { day: "Jue", date: "25", month: "sep" },
-  { day: "Vie", date: "26", month: "sep" },
-  { day: "Sáb", date: "27", month: "sep" },
-  { day: "Dom", date: "28", month: "sep" },
-];
+const initialDate = new Date(2026, 8, 22);
+const weekdayFormatter = new Intl.DateTimeFormat("es-EC", { weekday: "short" });
+const monthFormatter = new Intl.DateTimeFormat("es-EC", { month: "short" });
+const longDateFormatter = new Intl.DateTimeFormat("es-EC", { weekday: "long", day: "numeric", month: "long" });
+const monthYearFormatter = new Intl.DateTimeFormat("es-EC", { month: "long", year: "numeric" });
 
-function formatDate(index: number) {
-  return index === 0 ? "Hoy, lunes 22 de septiembre" : `${dates[index].day}, ${dates[index].date} de septiembre`;
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function sameDay(firstDate: Date, secondDate: Date) {
+  return firstDate.getFullYear() === secondDate.getFullYear()
+    && firstDate.getMonth() === secondDate.getMonth()
+    && firstDate.getDate() === secondDate.getDate();
+}
+
+function formatDate(date: Date) {
+  const formatted = longDateFormatter.format(date).replace(/^./, (letter) => letter.toUpperCase());
+  return sameDay(date, initialDate) ? `Hoy, ${formatted}` : formatted;
+}
+
+function shortWeekday(date: Date) {
+  return weekdayFormatter.format(date).replace(".", "").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function monthName(date: Date) {
+  return monthFormatter.format(date).replace(".", "");
 }
 
 export default function AvailabilityPage() {
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
   const [selectedCourt, setSelectedCourt] = useState(courts[0].id);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState(1);
   const court = useMemo(() => courts.find((item) => item.id === selectedCourt) ?? courts[0], [selectedCourt]);
   const selectedSlotIndex = selectedTime ? times.indexOf(selectedTime) : -1;
   const selectedEndHour = selectedSlotIndex >= 0 ? Number(times[selectedSlotIndex].slice(0, 2)) + duration : null;
+  const dates = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(initialDate, index)), []);
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const offset = (firstDay.getDay() + 6) % 7;
+    const start = addDays(firstDay, -offset);
+    return Array.from({ length: 42 }, (_, index) => addDays(start, index));
+  }, [calendarMonth]);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsCalendarOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
   function isRangeAvailable(startIndex: number, selectedDuration: number) {
     return Array.from({ length: selectedDuration }, (_, offset) => times[startIndex + offset]).every(
@@ -84,13 +119,26 @@ export default function AvailabilityPage() {
             <p className="mt-3 max-w-2xl text-base leading-7 text-stone-600">Selecciona una fecha, cancha y horario disponible. La reserva se confirma en el siguiente paso.</p>
 
             <section className="mt-7" aria-labelledby="date-heading">
-              <div className="flex items-center justify-between"><h2 id="date-heading" className="text-lg font-bold text-stone-900">¿Cuándo quieres jugar?</h2><button className="text-sm font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4" type="button">Ver calendario</button></div>
+              <div className="flex items-center justify-between"><h2 id="date-heading" className="text-lg font-bold text-stone-900">¿Cuándo quieres jugar?</h2><button aria-expanded={isCalendarOpen} aria-haspopup="dialog" className="text-sm font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4" onClick={() => setIsCalendarOpen(true)} type="button">Ver calendario</button></div>
               <div className="mt-3 -mx-5 flex gap-2 overflow-x-auto px-5 pb-2 sm:mx-0 sm:px-0" role="list" aria-label="Fechas disponibles">
-                {dates.map((date, index) => {
-                  const active = selectedDate === index;
-                  return <button aria-pressed={active} className={`min-w-17 shrink-0 rounded-xl border px-3 py-2.5 text-center transition ${active ? "border-emerald-800 bg-emerald-800 text-white shadow-sm" : "border-stone-200 bg-white text-stone-700 hover:border-emerald-400"}`} key={date.date} onClick={() => { setSelectedDate(index); setSelectedTime(null); }} type="button"><span className="block text-xs font-medium">{date.day}</span><span className="mt-0.5 block text-xl font-bold leading-6">{date.date}</span><span className={`block text-[11px] ${active ? "text-emerald-100" : "text-stone-500"}`}>{date.month}</span></button>;
+                {dates.map((date) => {
+                  const active = sameDay(selectedDate, date);
+                  return <button aria-pressed={active} className={`min-w-17 shrink-0 rounded-xl border px-3 py-2.5 text-center transition ${active ? "border-emerald-800 bg-emerald-800 text-white shadow-sm" : "border-stone-200 bg-white text-stone-700 hover:border-emerald-400"}`} key={date.toISOString()} onClick={() => { setSelectedDate(date); setSelectedTime(null); }} type="button"><span className="block text-xs font-medium">{sameDay(date, initialDate) ? "Hoy" : shortWeekday(date)}</span><span className="mt-0.5 block text-xl font-bold leading-6">{date.getDate()}</span><span className={`block text-[11px] ${active ? "text-emerald-100" : "text-stone-500"}`}>{monthName(date)}</span></button>;
                 })}
               </div>
+              {isCalendarOpen && <div aria-labelledby="calendar-title" aria-modal="true" className="fixed inset-0 z-50 flex items-end bg-stone-950/35 p-4 sm:items-center sm:justify-center" onMouseDown={() => setIsCalendarOpen(false)} role="dialog">
+                <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onMouseDown={(event) => event.stopPropagation()}>
+                  <div className="flex items-center justify-between gap-3"><button aria-label="Mes anterior" className="rounded-lg p-2 text-stone-600 transition hover:bg-stone-100" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))} type="button">←</button><h3 id="calendar-title" className="font-bold capitalize text-stone-900">{monthYearFormatter.format(calendarMonth)}</h3><button aria-label="Mes siguiente" className="rounded-lg p-2 text-stone-600 transition hover:bg-stone-100" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))} type="button">→</button></div>
+                  <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-stone-500">{["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => <span key={day}>{day}</span>)}</div>
+                  <div className="mt-2 grid grid-cols-7 gap-1" aria-label="Días del calendario">{calendarDays.map((date) => {
+                    const inMonth = date.getMonth() === calendarMonth.getMonth();
+                    const unavailable = date < initialDate;
+                    const active = sameDay(date, selectedDate);
+                    return <button aria-label={formatDate(date)} aria-pressed={active} className={`aspect-square rounded-lg text-sm font-semibold transition ${active ? "bg-emerald-800 text-white" : !inMonth ? "text-stone-300" : unavailable ? "cursor-not-allowed text-stone-300" : "text-stone-800 hover:bg-emerald-50 hover:text-emerald-800"}`} disabled={unavailable} key={date.toISOString()} onClick={() => { setSelectedDate(date); setSelectedTime(null); setIsCalendarOpen(false); }} type="button">{date.getDate()}</button>;
+                  })}</div>
+                  <button className="mt-5 w-full rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50" onClick={() => setIsCalendarOpen(false)} type="button">Cerrar calendario</button>
+                </div>
+              </div>}
             </section>
 
             <section className="mt-8" aria-labelledby="court-heading">

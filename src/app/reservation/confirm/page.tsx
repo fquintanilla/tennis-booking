@@ -45,7 +45,7 @@ export default async function ConfirmReservationPage({
   const validTime = Boolean(time && /^([01]\d|2[0-3]):00$/.test(time));
   const validDuration = [1, 2, 3].includes(duration);
 
-  if (!court || !date || !time || !isValidDate(date) || !validTime || !validDuration) {
+  if (!courtId || !court || !date || !time || !isValidDate(date) || !validTime || !validDuration) {
     return (
       <main className="grid min-h-screen place-items-center bg-[#f8f8f5] px-5 text-center">
         <div className="max-w-md rounded-2xl border border-stone-200 bg-white p-7 shadow-sm">

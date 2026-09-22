@@ -44,27 +44,5 @@ approval.
 ## Working agreements
 
 - Preserve existing user changes and avoid unrelated refactors.
-- Delegate Playwright end-to-end test implementation to the
-  `playwright-e2e-writer` custom agent defined in
-  `.codex/agents/playwright-e2e-writer.toml`.
 - Update `MVP_PROJECT_SCOPE.md` when an approved architectural decision
   materially changes the documented scope.
-- Add or update focused tests when application code and test tooling are
-  present; run the relevant checks before completing an implementation.
-
-## Component tests
-
-- Use Vitest and React Testing Library for component tests.
-- Co-locate each component test with its component and name it
-  `ComponentName.test.tsx`.
-- Use the shared `renderWithQuery` helper for components that use
-  TanStack Query; keep the helper's QueryClient isolated per test.
-- Test observable user behavior with accessible queries: rendering,
-  interactions, validation messages, loading states, and error states.
-- Mock network and Supabase boundaries, not component internals. Mock
-  Axios with Vitest's `vi.mock("axios")`; avoid snapshot-only tests.
-- Run the affected component tests after changes. Run the full component
-  test suite when shared components, providers, or test configuration
-  change.
-- Keep Playwright work limited to end-to-end coverage and delegate its
-  implementation as required above.

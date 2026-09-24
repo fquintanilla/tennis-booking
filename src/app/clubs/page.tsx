@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { logger } from "@/lib/observability/logger";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveClubs } from "@/data-access/clubs";
 
 const illustrationStyles = [
   {
@@ -53,18 +52,7 @@ function CourtIllustration({
 }
 
 export default async function ClubsPage() {
-  const supabase = await createClient();
-  const { data: clubs, error } = await supabase
-    .from("clubs")
-    .select("id, name, description, address, courts (id, surface_type, price)")
-    .eq("active", true)
-    .order("name");
-
-  if (error) {
-    logger.error("Failed to load active clubs", error, {
-      operation: "clubs.list",
-    });
-  }
+  const { data: clubs, error } = await getActiveClubs();
 
   const hasClubs = !error && clubs && clubs.length > 0;
 

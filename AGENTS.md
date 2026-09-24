@@ -22,6 +22,13 @@ approval.
   forms. Prefer native forms and Server Actions for simple mutations.
 - Keep client-side validation for user experience only; validate all
   mutations on the server.
+- Keep Supabase queries in `src/data-access` modules. Server Components,
+  Server Actions, and Route Handlers should use those modules instead of
+  querying Supabase directly.
+- Use the centralized `logger` from `@/lib/observability/logger` for
+  application logging. Log structured, non-sensitive context; keep provider
+  integrations in that module so observability tooling can be added without
+  changing callers.
 
 ## Reservation integrity and security
 
